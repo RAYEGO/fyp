@@ -210,10 +210,11 @@ function App() {
   const prefersReducedMotion = useReducedMotion()
   const [isIntroOpen, setIsIntroOpen] = useState(true)
   const [isSurpriseOpen, setIsSurpriseOpen] = useState(false)
+  const [isMusicDockOpen, setIsMusicDockOpen] = useState(true)
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const appId = useId()
   const personName = 'Fiorela'
-  const youtubeVideoId = '9wgyKMfy5oQ'
+  const youtubeVideoId = 'nXHfCacLpWY'
   const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=0&controls=1&rel=0&modestbranding=1&playsinline=1`
 
   const curiosities = useMemo(
@@ -339,6 +340,13 @@ function App() {
               onClick={() => scrollToId('faq')}
             >
               FAQ
+            </button>
+            <button
+              type="button"
+              className="navLink"
+              onClick={() => setIsMusicDockOpen((v) => !v)}
+            >
+              Música
             </button>
           </nav>
         </div>
@@ -707,21 +715,19 @@ function App() {
 
               <div className="introBody">
                 <p className="introLead">
-                  Por si te apetece, aquí va un tema para acompañar el scroll.
+                  Por si te apetece, abajo tienes un reproductor para acompañar el
+                  scroll.
                 </p>
-                <div className="videoEmbed">
-                  <iframe
-                    className="videoFrame"
-                    src={youtubeEmbedSrc}
-                    title="Reproductor de YouTube"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                </div>
               </div>
 
               <div className="modalActions introActions">
+                <button
+                  type="button"
+                  className="button secondary"
+                  onClick={() => setIsMusicDockOpen(true)}
+                >
+                  Ver reproductor
+                </button>
                 <button
                   type="button"
                   className="button primary"
@@ -791,6 +797,43 @@ function App() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      <div
+        className={`musicDock ${isMusicDockOpen ? 'isOpen' : 'isClosed'}`}
+        aria-label="Reproductor"
+      >
+        <div className="musicDockHeader">
+          <div className="musicDockTitle">Música</div>
+          <div className="musicDockActions">
+            <button
+              type="button"
+              className="iconButton"
+              aria-label={isMusicDockOpen ? 'Minimizar' : 'Expandir'}
+              onClick={() => setIsMusicDockOpen((v) => !v)}
+            >
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <path
+                  d="M6 12l4-4 4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div className="musicDockBody">
+          <iframe
+            className="musicFrame"
+            src={youtubeEmbedSrc}
+            title="Reproductor de YouTube"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      </div>
     </div>
   )
 }
