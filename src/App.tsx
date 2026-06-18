@@ -208,10 +208,13 @@ function Illustration({ name, title }: { name: IllustrationName; title: string }
 
 function App() {
   const prefersReducedMotion = useReducedMotion()
+  const [isIntroOpen, setIsIntroOpen] = useState(true)
   const [isSurpriseOpen, setIsSurpriseOpen] = useState(false)
   const [openFaqId, setOpenFaqId] = useState<string | null>(null)
   const appId = useId()
   const personName = 'Fiorela'
+  const youtubeVideoId = '9wgyKMfy5oQ'
+  const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=0&controls=1&rel=0&modestbranding=1&playsinline=1`
 
   const curiosities = useMemo(
     () => [
@@ -273,24 +276,25 @@ function App() {
   )
 
   useEffect(() => {
-    if (!isSurpriseOpen) return
-
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsSurpriseOpen(false)
+      if (e.key !== 'Escape') return
+      if (isIntroOpen) setIsIntroOpen(false)
+      else if (isSurpriseOpen) setIsSurpriseOpen(false)
     }
 
+    if (!isSurpriseOpen && !isIntroOpen) return
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isSurpriseOpen])
+  }, [isSurpriseOpen, isIntroOpen])
 
   useEffect(() => {
-    if (!isSurpriseOpen) return
+    if (!isSurpriseOpen && !isIntroOpen) return
     const { overflow } = document.body.style
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = overflow
     }
-  }, [isSurpriseOpen])
+  }, [isSurpriseOpen, isIntroOpen])
 
   const scrollToId = (id: string) => {
     const el = document.getElementById(id)
@@ -655,6 +659,81 @@ function App() {
           </p>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {isIntroOpen ? (
+          <motion.div
+            className="modalOverlay"
+            initial={prefersReducedMotion ? undefined : { opacity: 0 }}
+            animate={prefersReducedMotion ? undefined : { opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { opacity: 0 }}
+            transition={prefersReducedMotion ? undefined : { duration: 0.2 }}
+            role="presentation"
+            onClick={() => setIsIntroOpen(false)}
+          >
+            <motion.div
+              className="glass modal introModal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Antes de empezar"
+              initial={
+                prefersReducedMotion ? undefined : { y: 14, opacity: 0, scale: 0.98 }
+              }
+              animate={prefersReducedMotion ? undefined : { y: 0, opacity: 1, scale: 1 }}
+              exit={
+                prefersReducedMotion ? undefined : { y: 14, opacity: 0, scale: 0.98 }
+              }
+              transition={revealTransition}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modalHeader">
+                <div className="modalTitle">Antes de empezar...</div>
+                <button
+                  type="button"
+                  className="iconButton"
+                  aria-label="Cerrar"
+                  onClick={() => setIsIntroOpen(false)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M6 6l8 8M14 6l-8 8"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="introBody">
+                <p className="introLead">
+                  Por si te apetece, aquí va un tema para acompañar el scroll.
+                </p>
+                <div className="videoEmbed">
+                  <iframe
+                    className="videoFrame"
+                    src={youtubeEmbedSrc}
+                    title="Reproductor de YouTube"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
+              <div className="modalActions introActions">
+                <button
+                  type="button"
+                  className="button primary"
+                  onClick={() => setIsIntroOpen(false)}
+                >
+                  Empezar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isSurpriseOpen ? (
