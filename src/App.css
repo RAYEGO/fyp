@@ -600,13 +600,88 @@
   padding: 10px;
 }
 
-.musicFrame {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border: 0;
-  display: block;
-  border-radius: 14px;
+.ytHidden {
+  position: absolute;
+  width: 0;
+  height: 0;
   overflow: hidden;
+  pointer-events: none;
+}
+
+.musicMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.musicStatus {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.musicLink {
+  font-size: 12px;
+  color: rgba(241, 245, 249, 0.9);
+  text-decoration: none;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.musicLink:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.musicControls {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.musicControlButton {
+  appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(241, 245, 249, 0.92);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.musicControlButton:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.musicControlButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.musicVolume {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.musicVolumeLabel {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.65);
+}
+
+.musicVolumeRange {
+  width: 100%;
+  accent-color: rgba(167, 139, 250, 0.9);
 }
 
 .musicDock.isClosed .musicDockBody {
@@ -614,11 +689,6 @@
   padding-bottom: 0;
   height: 0;
   overflow: hidden;
-}
-
-.musicDock.isClosed .musicFrame {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .musicDock.isClosed .musicDockHeader .iconButton {

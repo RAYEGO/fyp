@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import './App.css'
 
@@ -215,7 +215,134 @@ function App() {
   const appId = useId()
   const personName = 'Fiorela'
   const youtubeVideoId = 'nXHfCacLpWY'
-  const youtubeEmbedSrc = `https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=0&controls=1&rel=0&modestbranding=1&playsinline=1`
+  const youtubeWatchUrl = `https://www.youtube.com/watch?v=${youtubeVideoId}`
+  const ytPlayerElementId = `${appId}-yt-player`
+  const ytPlayerRef = useRef<unknown>(null)
+  const [isYtReady, setIsYtReady] = useState(false)
+  const [isYtPlaying, setIsYtPlaying] = useState(false)
+  const [isYtMuted, setIsYtMuted] = useState(false)
+  const [ytVolume, setYtVolume] = useState(70)
+
+  useEffect(() => {
+    const w = window as unknown as {
+      YT?: {
+        Player: new (
+          el: string,
+          options: {
+            height: string
+            width: string
+            videoId: string
+            playerVars: Record<string, number>
+            events: {
+              onReady: () => void
+              onStateChange: (e: { data: number }) => void
+            }
+          },
+        ) => {
+          playVideo: () => void
+          pauseVideo: () => void
+          isMuted: () => boolean
+          mute: () => void
+          unMute: () => void
+          setVolume: (v: number) => void
+          destroy: () => void
+        }
+        PlayerState: { PLAYING: number; PAUSED: number; ENDED: number }
+      }
+      onYouTubeIframeAPIReady?: () => void
+    }
+
+    let didCancel = false
+
+    const ensureScript = () => {
+      const existing = document.getElementById('yt-iframe-api')
+      if (existing) return
+      const s = document.createElement('script')
+      s.id = 'yt-iframe-api'
+      s.src = 'https://www.youtube.com/iframe_api'
+      s.async = true
+      document.head.appendChild(s)
+    }
+
+    const createPlayer = () => {
+      if (didCancel) return
+      if (!w.YT?.Player) return
+      if (ytPlayerRef.current) return
+
+      ytPlayerRef.current = new w.YT.Player(ytPlayerElementId, {
+        height: '0',
+        width: '0',
+        videoId: youtubeVideoId,
+        playerVars: {
+          controls: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+        },
+        events: {
+          onReady: () => {
+            if (didCancel) return
+            setIsYtReady(true)
+            const p = ytPlayerRef.current as {
+              setVolume: (v: number) => void
+              isMuted: () => boolean
+            }
+            p.setVolume(ytVolume)
+            setIsYtMuted(p.isMuted())
+          },
+          onStateChange: (e) => {
+            if (didCancel) return
+            const state = e.data
+            const playing = state === w.YT!.PlayerState.PLAYING
+            setIsYtPlaying(playing)
+            if (state === w.YT!.PlayerState.ENDED) setIsYtPlaying(false)
+          },
+        },
+      })
+    }
+
+    const prevReady = w.onYouTubeIframeAPIReady
+    w.onYouTubeIframeAPIReady = () => {
+      prevReady?.()
+      createPlayer()
+    }
+
+    ensureScript()
+    createPlayer()
+
+    return () => {
+      didCancel = true
+      const p = ytPlayerRef.current as { destroy?: () => void } | null
+      p?.destroy?.()
+      ytPlayerRef.current = null
+    }
+  }, [ytPlayerElementId, youtubeVideoId, ytVolume])
+
+  const togglePlay = () => {
+    const p = ytPlayerRef.current as
+      | { playVideo: () => void; pauseVideo: () => void }
+      | null
+    if (!p) return
+    if (isYtPlaying) p.pauseVideo()
+    else p.playVideo()
+  }
+
+  const toggleMute = () => {
+    const p = ytPlayerRef.current as
+      | { isMuted: () => boolean; mute: () => void; unMute: () => void }
+      | null
+    if (!p) return
+    if (p.isMuted()) p.unMute()
+    else p.mute()
+    setIsYtMuted(p.isMuted())
+  }
+
+  const setVolume = (next: number) => {
+    const clamped = Math.max(0, Math.min(100, next))
+    setYtVolume(clamped)
+    const p = ytPlayerRef.current as { setVolume: (v: number) => void } | null
+    p?.setVolume(clamped)
+  }
 
   const curiosities = useMemo(
     () => [
@@ -824,14 +951,50 @@ function App() {
           </div>
         </div>
         <div className="musicDockBody">
-          <iframe
-            className="musicFrame"
-            src={youtubeEmbedSrc}
-            title="Reproductor de YouTube"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
+          <div id={ytPlayerElementId} className="ytHidden" />
+          <div className="musicMeta">
+            <div className="musicStatus">
+              {isYtReady ? (isYtPlaying ? 'Reproduciendo' : 'En pausa') : 'Cargando…'}
+            </div>
+            <a
+              className="musicLink"
+              href={youtubeWatchUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir
+            </a>
+          </div>
+          <div className="musicControls">
+            <button
+              type="button"
+              className="musicControlButton"
+              onClick={togglePlay}
+              disabled={!isYtReady}
+            >
+              {isYtPlaying ? 'Pausar' : 'Play'}
+            </button>
+            <button
+              type="button"
+              className="musicControlButton"
+              onClick={toggleMute}
+              disabled={!isYtReady}
+            >
+              {isYtMuted ? 'Sonido' : 'Mute'}
+            </button>
+            <label className="musicVolume">
+              <span className="musicVolumeLabel">Vol</span>
+              <input
+                className="musicVolumeRange"
+                type="range"
+                min={0}
+                max={100}
+                value={ytVolume}
+                onChange={(e) => setVolume(e.currentTarget.valueAsNumber)}
+                disabled={!isYtReady}
+              />
+            </label>
+          </div>
         </div>
       </div>
     </div>
